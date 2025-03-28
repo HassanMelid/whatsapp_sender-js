@@ -17,11 +17,12 @@ class WhatsAppService extends EventEmitter {
         return new Client({
             authStrategy: new LocalAuth({ dataPath: this.authPath }),
             puppeteer: {
-                headless: 'new', // Usar 'new' en lugar de false
+                headless: false, // Aseguramos que Puppeteer no sea headless
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
                     '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
                     '--no-first-run',
                     '--disable-gpu',
                     '--window-size=1280,800'
@@ -65,6 +66,8 @@ class WhatsAppService extends EventEmitter {
             const sessionExists = await this.checkSessionExists();
             if (sessionExists) {
                 console.log('Sesión existente encontrada.');
+            } else {
+                console.log('No se encontró ninguna sesión existente.');
             }
 
             await this.client.initialize();

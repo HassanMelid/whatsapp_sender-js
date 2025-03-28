@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const WhatsAppService = require('../services/whatsappService');
+const fs = require('fs');
 
 module.exports = (io) => {
     const whatsappService = new WhatsAppService();
@@ -29,11 +30,34 @@ module.exports = (io) => {
     router.post('/initialize', async (req, res) => {
         try {
             console.log('Inicializando WhatsApp...');
+            
+            // Registro detallado del estado actual del cliente
+            console.log('Estado actual del cliente:', {
+                isReady: whatsappService.isReady,
+                authPath: whatsappService.authPath
+            });
+
+            // Inicializar el cliente de WhatsApp
             await whatsappService.initialize();
-            res.json({ status: 'success', message: 'WhatsApp inicializado correctamente. Escanea el código QR en el navegador.' });
+
+            res.json({ 
+                status: 'success', 
+                message: 'WhatsApp inicializado correctamente. Escanea el código QR en el navegador.',
+                details: {
+                    authPath: whatsappService.authPath,
+                    isReady: whatsappService.isReady
+                }
+            });
         } catch (error) {
-            console.error('Error al inicializar WhatsApp:', error.message);
-            res.status(500).json({ status: 'error', message: error.message });
+            console.error('Error detallado al inicializar WhatsApp:', error);
+
+            // Asegurarse de que el error sea serializable
+            res.status(500).json({ 
+                status: 'error', 
+                message: error.message,
+                stack: error.stack,
+                name: error.name
+            });
         }
     });
 

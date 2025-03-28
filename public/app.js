@@ -57,11 +57,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     initBtn.addEventListener('click', () => {
+        console.log('Enviando solicitud para inicializar WhatsApp...');
         fetch('/api/initialize', { method: 'POST' })
-            .then((response) => {
+            .then(async (response) => {
                 if (!response.ok) {
-                    throw new Error('Error al inicializar WhatsApp');
+                    const errorData = await response.json();
+                    console.error('Error en la inicialización:', errorData);
+                    throw new Error(errorData.message || 'Error desconocido');
                 }
+                const data = await response.json();
+                console.log('Respuesta de inicialización:', data);
                 connectionStatus.textContent = "Inicializando...";
                 connectionStatus.style.color = "#ff9800";
             })
