@@ -198,3 +198,20 @@
 .restartButton:hover {
   background-color: #0056b3;
 }
+
+.header {
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.header .link {
+  color: #25D366;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.header .link:hover {
+  text-decoration: underline;
+}

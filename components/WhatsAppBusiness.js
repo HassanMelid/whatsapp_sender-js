@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import styles from './WhatsAppBusiness.module.css';
 
-const socket = io('http://localhost:3000'); // Aseguramos que el cliente se conecte al servidor de Socket.IO
+const socket = io(); // Permite que el cliente se conecte al servidor de Socket.IO sin limitarse a una IP específica
 
 const countryFlags = {
   '34': '🇪🇸', // España
@@ -30,6 +30,8 @@ const WhatsAppBusiness = () => {
   const [message, setMessage] = useState('Escribe tu mensaje aquí...');
   const [showHistory, setShowHistory] = useState(false);
   const [qrCode, setQrCode] = useState(null);
+  const [sentMessagesCount, setSentMessagesCount] = useState(0);
+  const [failedMessagesCount, setFailedMessagesCount] = useState(0);
 
   useEffect(() => {
     socket.on('qr', (qrImage) => {
@@ -67,35 +69,49 @@ const WhatsAppBusiness = () => {
 
       const data = await response.json();
       setIsConnected(true);
-      console.log('Respuesta de inicialización:', data);
-      alert(data.message || 'WhatsApp inicializado correctamente.');
+      console.log('WhatsApp inicializado correctamente:', data.message);
     } catch (error) {
       console.error('Error completo al inicializar WhatsApp:', error);
-      alert(`No se pudo inicializar WhatsApp: ${error.message}`);
     }
   };
 
-  const handleSendMessage = () => {
-    // Lógica para enviar mensajes
-    alert('Mensajes enviados');
+  const handleSendMessage = async () => {
+    const numbers = phoneNumbers.split('\n').map(n => n.trim()).filter(n => n);
+    if (!numbers.length || !message.trim()) {
+      console.error('Debes ingresar números y un mensaje.');
+      return;
+    }
+
+    try {
+      console.log('Enviando mensajes...');
+      const response = await fetch('/api/messages/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ numbers: numbers.map(n => `${countryCode}${n}`), message })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error al enviar mensajes:', errorData);
+        return;
+      }
+
+      const result = await response.json();
+      const sentCount = result.results.filter(r => r.status === 'success').length;
+      const failedCount = result.results.filter(r => r.status === 'error').length;
+
+      setSentMessagesCount(sentCount);
+      setFailedMessagesCount(failedCount);
+
+      console.log(`Mensajes enviados: ${sentCount}`);
+      console.log(`Mensajes no enviados: ${failedCount}`);
+    } catch (error) {
+      console.error('Error al enviar mensajes:', error);
+    }
   };
 
   const handleRestart = async () => {
-    try {
-      console.log('Enviando solicitud para reiniciar WhatsApp...');
-      const response = await fetch('/api/whatsapp/restart', { method: 'POST' });
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error en el reinicio:', errorData);
-        throw new Error(errorData.message || 'Error desconocido');
-      }
-      const data = await response.json();
-      console.log('Respuesta del reinicio:', data);
-      alert(data.message || 'WhatsApp reiniciado correctamente.');
-    } catch (error) {
-      console.error('Error completo al reiniciar WhatsApp:', error);
-      alert(`No se pudo reiniciar WhatsApp: ${error.message}`);
-    }
+    await handleInitialize();
   };
 
   const getFlagEmoji = (code) => {
@@ -116,7 +132,15 @@ const WhatsAppBusiness = () => {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Plataforma WhatsApp Business</h1>
+      <header className={styles.header}>
+        <h1>
+          Desarrollado por{' '}
+          <a href="https://www.melidsoft.com" target="_blank" rel="noopener noreferrer" className={styles.link}>
+            Melid Soft
+          </a>
+        </h1>
+      </header>
+      <h2 className={styles.title}>Plataforma WhatsApp Business</h2>
       <p className={styles.subtitle}>Envía mensajes y gestiona tus comunicaciones de WhatsApp</p>
 
       {!isConnected && (
@@ -169,7 +193,12 @@ const WhatsAppBusiness = () => {
       </div>
 
       <div className={styles.inputGroup}>
-        <label className={styles.inputLabel}>Mensaje</label>
+        <label className={styles.inputLabel}>
+          Mensaje 
+          <span className={styles.messageStats}>
+            (Enviados: {sentMessagesCount}, No enviados: {failedMessagesCount})
+          </span>
+        </label>
         <textarea
           className={styles.textarea}
           rows={6}
@@ -183,7 +212,7 @@ const WhatsAppBusiness = () => {
       <div className={styles.buttonGroup}>
         <button
           className={`${styles.toggleButton} ${!showHistory ? styles.activeButton : ''}`}
-          onClick={() => setShowHistory(false)}
+          onClick={handleSendMessage}
         >
           Enviar Mensaje
         </button>
