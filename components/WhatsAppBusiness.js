@@ -1,6 +1,9 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import io from 'socket.io-client';
 import styles from './WhatsAppBusiness.module.css';
+
+const socket = io('http://localhost:3000'); // Aseguramos que el cliente se conecte al servidor de Socket.IO
 
 const countryFlags = {
   '34': '🇪🇸', // España
@@ -26,22 +29,46 @@ const WhatsAppBusiness = () => {
   const [phoneNumbers, setPhoneNumbers] = useState('70123456');
   const [message, setMessage] = useState('Escribe tu mensaje aquí...');
   const [showHistory, setShowHistory] = useState(false);
+  const [qrCode, setQrCode] = useState(null);
+
+  useEffect(() => {
+    socket.on('qr', (qrImage) => {
+      setQrCode(qrImage);
+    });
+
+    socket.on('ready', () => {
+      setIsConnected(true);
+      setQrCode(null); // Ocultar QR cuando esté conectado
+    });
+
+    socket.on('disconnected', () => {
+      setIsConnected(false);
+    });
+
+    return () => socket.disconnect();
+  }, []);
 
   const handleInitialize = async () => {
     try {
       console.log('Enviando solicitud para inicializar WhatsApp...');
-      const response = await fetch('/api/initialize', { method: 'POST' });
+      const response = await fetch('/api/whatsapp/initialize', { method: 'POST' });
       
-      if (response.ok) {
-        const data = await response.json();
-        setIsConnected(true);
-        console.log('Respuesta de inicialización:', data);
-        alert(data.message || 'WhatsApp inicializado correctamente.');
-      } else {
-        const errorData = await response.json();
+      if (!response.ok) {
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (jsonError) {
+          console.error('Error al parsear la respuesta del servidor:', jsonError);
+          throw new Error('Error desconocido en el servidor.');
+        }
         console.error('Error en la inicialización:', errorData);
         throw new Error(errorData.message || 'Error desconocido');
       }
+
+      const data = await response.json();
+      setIsConnected(true);
+      console.log('Respuesta de inicialización:', data);
+      alert(data.message || 'WhatsApp inicializado correctamente.');
     } catch (error) {
       console.error('Error completo al inicializar WhatsApp:', error);
       alert(`No se pudo inicializar WhatsApp: ${error.message}`);
@@ -51,6 +78,24 @@ const WhatsAppBusiness = () => {
   const handleSendMessage = () => {
     // Lógica para enviar mensajes
     alert('Mensajes enviados');
+  };
+
+  const handleRestart = async () => {
+    try {
+      console.log('Enviando solicitud para reiniciar WhatsApp...');
+      const response = await fetch('/api/whatsapp/restart', { method: 'POST' });
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error en el reinicio:', errorData);
+        throw new Error(errorData.message || 'Error desconocido');
+      }
+      const data = await response.json();
+      console.log('Respuesta del reinicio:', data);
+      alert(data.message || 'WhatsApp reiniciado correctamente.');
+    } catch (error) {
+      console.error('Error completo al reiniciar WhatsApp:', error);
+      alert(`No se pudo reiniciar WhatsApp: ${error.message}`);
+    }
   };
 
   const getFlagEmoji = (code) => {
@@ -74,21 +119,29 @@ const WhatsAppBusiness = () => {
       <h1 className={styles.title}>Plataforma WhatsApp Business</h1>
       <p className={styles.subtitle}>Envía mensajes y gestiona tus comunicaciones de WhatsApp</p>
 
-      <div className={styles.statusBox}>
-        <h3 className={styles.statusTitle}>WhatsApp no está inicializado</h3>
-        <p className={styles.connectionStatus}>
-          {isConnected ? 'Conectado' : 'No conectado'}
-        </p>
-        
-        {!isConnected && (
+      {!isConnected && (
+        <div className={styles.statusBox}>
+          <div className={styles.statusContent}>
+            <h3 className={styles.statusTitle}>WhatsApp no está inicializado</h3>
+            {qrCode && <img src={qrCode} alt="QR Code" className={styles.qrCode} />}
+          </div>
           <button 
             className={styles.initButton}
             onClick={handleInitialize}
           >
             Inicializar WhatsApp
           </button>
-        )}
-      </div>
+        </div>
+      )}
+
+      {isConnected && (
+        <div className={styles.connectedBox}>
+          <p className={styles.connectedMessage}>WhatsApp conectado</p>
+          <button className={styles.restartButton} onClick={handleRestart}>
+            Abrir WhatsApp
+          </button>
+        </div>
+      )}
 
       <div className={styles.inputGroup}>
         <label className={styles.inputLabel}>Código de país</label>

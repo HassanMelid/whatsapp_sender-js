@@ -1,6 +1,7 @@
 const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
 const EventEmitter = require('events');
+const config = require('../config');
 const fs = require('fs');
 const path = require('path');
 
@@ -8,53 +9,36 @@ class WhatsAppService extends EventEmitter {
     constructor() {
         super();
         this.authPath = path.join(__dirname, '../.wwebjs_auth'); // Ruta de autenticación
-        this.client = this.createClient();
-        this.isReady = false; // Estado para verificar si el cliente está listo
-        this.initializeEvents();
-    }
-
-    createClient() {
-        return new Client({
-            authStrategy: new LocalAuth({ dataPath: this.authPath }),
-            puppeteer: {
-                headless: false, // Aseguramos que Puppeteer no sea headless
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-accelerated-2d-canvas',
-                    '--no-first-run',
-                    '--disable-gpu',
-                    '--window-size=1280,800'
-                ]
-            }
+        this.client = new Client({
+            authStrategy: new LocalAuth({ dataPath: './sessions' }),
+            puppeteer: config.whatsapp.puppeteerOptions // Usar configuración centralizada
         });
+        this.isReady = false; // Estado para verificar si el cliente está listo
+        this.setupEvents();
     }
 
-    initializeEvents() {
+    setupEvents() {
         this.client.on('qr', async (qr) => {
-            const qrImage = await qrcode.toDataURL(qr);
-            this.emit('qr', qrImage);
+            this.emit('qr', await qrcode.toDataURL(qr));
         });
 
         this.client.on('ready', () => {
             this.isReady = true; // Marcar el cliente como listo
-            this.emit('ready', 'WhatsApp conectado');
+            this.emit('ready', 'Conectado a WhatsApp');
         });
 
         this.client.on('disconnected', (reason) => {
             this.isReady = false; // Marcar el cliente como no listo
-            this.emit('disconnected', `WhatsApp desconectado: ${reason}`);
+            this.emit('disconnected', `Desconectado de WhatsApp: ${reason}`);
         });
 
         this.client.on('auth_failure', (msg) => {
             this.isReady = false; // Marcar el cliente como no listo
-            this.emit('auth_failure', `Error de autenticación: ${msg}`);
+            this.emit('error', `Error de autenticación: ${msg}`);
         });
 
         this.client.on('error', (error) => {
-            console.error('Error en el cliente de WhatsApp:', error.message);
-            this.emit('error', error.message);
+            this.emit('error', `Error en el cliente de WhatsApp: ${error.message}`);
         });
     }
 
@@ -112,6 +96,35 @@ class WhatsAppService extends EventEmitter {
         } catch (error) {
             console.error(`Error al enviar mensaje a ${number}:`, error.message);
             return { status: 'error', number, error: error.message };
+        }
+    }
+
+    async restartClient() {
+        try {
+            console.log('Reiniciando cliente de WhatsApp...');
+            this.isReady = false;
+
+            // Destruir el cliente actual si está inicializado
+            if (this.client) {
+                await this.client.destroy();
+                console.log('Cliente de WhatsApp destruido.');
+            }
+
+            // Crear un nuevo cliente
+            this.client = new Client({
+                authStrategy: new LocalAuth({ dataPath: './sessions' }),
+                puppeteer: config.whatsapp.puppeteerOptions
+            });
+
+            // Configurar eventos nuevamente
+            this.setupEvents();
+
+            // Inicializar el nuevo cliente
+            await this.client.initialize();
+            console.log('Cliente de WhatsApp reiniciado correctamente.');
+        } catch (error) {
+            console.error('Error al reiniciar el cliente de WhatsApp:', error.message);
+            throw new Error(`Error al reiniciar el cliente de WhatsApp: ${error.message}`);
         }
     }
 }

@@ -11,7 +11,12 @@ const handle = nextApp.getRequestHandler();
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIO(server);
+const io = socketIO(server, {
+    cors: {
+        origin: '*', // Permitir todas las conexiones en desarrollo
+        methods: ['GET', 'POST']
+    }
+});
 
 nextApp.prepare().then(() => {
     // Configuración
@@ -19,7 +24,7 @@ nextApp.prepare().then(() => {
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
 
-    // Socket.io
+    // Socket.IO
     io.on('connection', (socket) => {
         console.log('Nuevo cliente conectado');
         socket.on('disconnect', () => {
@@ -42,7 +47,7 @@ nextApp.prepare().then(() => {
 
     // Manejar todas las demás rutas con Next.js
     app.all('*', (req, res) => {
-        return handle(req, res);
+        return handle(req, res); // Next.js maneja las rutas restantes
     });
 
     // Iniciar servidor

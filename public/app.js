@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     initBtn.addEventListener('click', () => {
-        fetch('/api/initialize', { method: 'POST' })
+        fetch('/api/whatsapp/initialize', { method: 'POST' })
             .then(async (response) => {
                 if (!response.ok) {
                     const errorData = await response.json();
@@ -96,8 +96,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ numbers: numbers.map(n => `${countryCode}${n}`), message })
             });
     
-            const result = await response.json();  // Ensure response is JSON
-            console.log(result);
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Error al enviar mensajes:', errorData);
+                throw new Error(errorData.message || 'Error desconocido');
+            }
+    
+            const result = await response.json();
+            console.log('Resultado del envío:', result);
     
             if (result.status === 'completed') {
                 alert("Mensajes enviados correctamente.");

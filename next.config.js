@@ -1,8 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
-    allowedDevOrigins: ['http://192.168.56.1']
-    
+    // Remove allowedDevOrigins to allow any IP or domain during development
 };
 
 module.exports = nextConfig;

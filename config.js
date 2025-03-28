@@ -2,14 +2,15 @@ require('dotenv').config();
 
 module.exports = {
     app: {
-        port: process.env.PORT || 3000, // Aseguramos que el puerto sea válido
+        port: process.env.PORT || 3000,
         maxMessagesPerMinute: 30,
         defaultMessageDelay: 2000
     },
     whatsapp: {
         countryCode: process.env.COUNTRY_CODE || '591',
         puppeteerOptions: {
-            headless: false,
+            headless: false, // Cambiar a true si no necesitas ver el navegador
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || require('puppeteer').executablePath(),
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -17,9 +18,8 @@ module.exports = {
                 '--disable-accelerated-2d-canvas',
                 '--no-first-run',
                 '--no-zygote',
-                '--single-process',
                 '--disable-gpu',
-                '--window-size=800,600'
+                '--window-size=1280,800'
             ]
         }
     },

@@ -4,22 +4,23 @@
     "description": "A WhatsApp messaging service",
     "main": "index.js",
     "scripts": {
-      "start": "node app.js",
-      "dev": "next dev"
+        "start": "node app.js",
+        "dev": "cross-env NODE_OPTIONS='--inspect' next dev"
     },
     "dependencies": {
-      "dotenv": "^10.0.0",
-      "express": "^4.17.1",
-      "http": "^0.0.1-security",
-      "next": "latest",
-      "puppeteer": "^13.0.0",
-      "qrcode": "^1.4.4",
-      "socket.io": "^4.4.1",
-      "whatsapp-web.js": "^1.14.1"
+        "dotenv": "^10.0.0",
+        "express": "^4.17.1",
+        "http": "^0.0.1-security",
+        "next": "latest",
+        "puppeteer": "^24.4.0",
+        "qrcode": "^1.4.4",
+        "socket.io": "^4.4.1",
+        "socket.io-client": "^4.4.1",
+        "whatsapp-web.js": "^1.14.1"
     },
     "devDependencies": {
-      "nodemon": "^2.0.7"
+        "cross-env": "^7.0.3",
+        "nodemon": "^2.0.7"
     },
-    "author": "HassanMelid",
-    "license": "MIT"
-  }
+    "author": "HassanMelid"
+}
