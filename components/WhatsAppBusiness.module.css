@@ -1,0 +1,159 @@
+.container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
+.title {
+  color: #25D366;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+.checkboxGroup {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.checkboxLabel input {
+  accent-color: #25D366;
+}
+
+.statusBox {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1.5rem 0;
+  border-left: 4px solid #ddd;
+}
+
+.statusTitle {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  color: #dc3545;
+}
+
+.connectionStatus {
+  margin: 0.5rem 0;
+  font-weight: 500;
+}
+
+.initButton {
+  background-color: #087830;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.initButton:hover {
+  background-color: #065b26;
+}
+
+.inputGroup {
+  margin-bottom: 1.5rem;
+}
+
+.inputLabel {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.inputField {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.sendButton {
+  background-color: #25D366;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.sendButton:hover {
+  background-color: #128C7E;
+}
+
+.sendButton:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  justify-content: center;
+}
+
+.toggleButton {
+  background-color: #f8f9fa;
+  color: #666;
+  border: 1px solid #ddd;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.toggleButton:hover {
+  background-color: #e2e6ea;
+}
+
+.activeButton {
+  background-color: #25D366;
+  color: white;
+  border-color: #25D366;
+}
+
+.flagInputContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.flagEmoji {
+  font-size: 1.5rem;
+}

@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Personalización adicional */
+body {
+    @apply bg-black text-white;
+}
+
+h1, h2, h3 {
+    @apply text-center font-bold;
+}
+
+button {
+    @apply bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600;
+}
+
+textarea, input {
+    @apply bg-gray-800 text-white border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500;
+}
