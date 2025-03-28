@@ -47,7 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
     numbersTextarea.addEventListener('focus', () => {
         if (numbersTextarea.value === '70123456') {
             numbersTextarea.value = '';
-        }
+            }
+        });
     });
 
     messageTextarea.addEventListener('focus', () => {
@@ -57,7 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     initBtn.addEventListener('click', () => {
-        console.log('Enviando solicitud para inicializar WhatsApp...');
         fetch('/api/initialize', { method: 'POST' })
             .then(async (response) => {
                 if (!response.ok) {
@@ -75,30 +75,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert("No se pudo inicializar WhatsApp. Verifica la conexión o configuración.");
             });
     });
-
+    
     sendMessageBtn.addEventListener('click', async () => {
         const countryCode = countryCodeInput.value.trim();
         const numbers = numbersTextarea.value.split('\n').map(n => n.trim()).filter(n => n);
         const message = messageTextarea.value.trim();
-
+    
         if (!numbers.length || !message) {
             alert("Debes ingresar números y un mensaje.");
             return;
         }
-
+    
         sendMessageBtn.disabled = true;
         sendMessageBtn.textContent = "Enviando...";
-
+    
         try {
             const response = await fetch('/api/messages/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ numbers: numbers.map(n => `${countryCode}${n}`), message })
             });
-
-            const result = await response.json();
+    
+            const result = await response.json();  // Ensure response is JSON
             console.log(result);
-
+    
             if (result.status === 'completed') {
                 alert("Mensajes enviados correctamente.");
             } else {
@@ -112,27 +112,4 @@ document.addEventListener('DOMContentLoaded', () => {
             sendMessageBtn.textContent = "Enviar Mensaje";
         }
     });
-
-    socket.on('qr', (qrImage) => {
-        qrContainer.innerHTML = `<img src="${qrImage}" alt="QR Code">`;
-        connectionStatus.textContent = "Escanea el QR con WhatsApp";
-        connectionStatus.style.color = "#2196f3";
-    });
-
-    socket.on('ready', (message) => {
-        // Ocultar el QR y el mensaje de "WhatsApp no está inicializado"
-        qrContainer.innerHTML = '';
-        statusBox.style.display = 'none';
-
-        connectionStatus.textContent = message;
-        connectionStatus.style.color = "#4caf50";
-    });
-
-    socket.on('disconnected', (message) => {
-        // Mostrar el QR y el mensaje de "WhatsApp no está inicializado" nuevamente
-        statusBox.style.display = 'block';
-        connectionStatus.textContent = message;
-        connectionStatus.style.color = "#f44336";
-    });
-});
 
