@@ -1,11 +1,9 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import io from "socket.io-client"
 import styles from "./WhatsAppBusiness.module.css"
 
-// We'll initialize socket on the client side only
-let socket
+const socket = io() // Permite que el cliente se conecte al servidor de Socket.IO sin limitarse a una IP específica
 
 const countryFlags = {
   34: "🇪🇸", // España
@@ -34,71 +32,26 @@ const WhatsAppBusiness = () => {
   const [qrCode, setQrCode] = useState(null)
   const [sentMessagesCount, setSentMessagesCount] = useState(0)
   const [failedMessagesCount, setFailedMessagesCount] = useState(0)
-  const [error, setError] = useState(null)
-  const [isInitializing, setIsInitializing] = useState(false)
 
-  // Initialize socket connection on client side
   useEffect(() => {
-    // socketInitializer will handle socket setup
-    const socketInitializer = async () => {
-      // We need to check if we're in the browser
-      if (typeof window !== "undefined") {
-        socket = io({
-          path: "/socket.io",
-          reconnectionAttempts: 5,
-          reconnectionDelay: 1000,
-          autoConnect: true,
-          transports: ["polling", "websocket"],
-        })
+    socket.on("qr", (qrImage) => {
+      setQrCode(qrImage)
+    })
 
-        socket.on("connect", () => {
-          console.log("Socket connected")
-        })
+    socket.on("ready", () => {
+      setIsConnected(true)
+      setQrCode(null) // Ocultar QR cuando esté conectado
+    })
 
-        socket.on("connect_error", (err) => {
-          console.error("Socket connection error:", err)
-          setError(`Error de conexión: ${err.message}`)
-        })
+    socket.on("disconnected", () => {
+      setIsConnected(false)
+    })
 
-        socket.on("qr", (qrImage) => {
-          setQrCode(qrImage)
-          setError(null)
-        })
-
-        socket.on("ready", () => {
-          setIsConnected(true)
-          setQrCode(null) // Ocultar QR cuando esté conectado
-          setError(null)
-          setIsInitializing(false)
-        })
-
-        socket.on("disconnected", () => {
-          setIsConnected(false)
-          setError("WhatsApp se ha desconectado")
-          setIsInitializing(false)
-        })
-
-        socket.on("error", (errorMsg) => {
-          setError(errorMsg)
-          setIsInitializing(false)
-        })
-      }
-    }
-
-    socketInitializer()
-
-    // Cleanup on component unmount
-    return () => {
-      if (socket) {
-        socket.disconnect()
-      }
-    }
+    return () => socket.disconnect()
   }, [])
 
   const handleInitialize = async () => {
     try {
-      setIsInitializing(true)
-      setError(null)
       console.log("Enviando solicitud para inicializar WhatsApp...")
       const response = await fetch("/api/whatsapp/initialize", { method: "POST" })
 
@@ -108,23 +61,17 @@ const WhatsAppBusiness = () => {
           errorData = await response.json()
         } catch (jsonError) {
           console.error("Error al parsear la respuesta del servidor:", jsonError)
-          setError("Error desconocido en el servidor")
-          setIsInitializing(false)
-          return
+          throw new Error("Error desconocido en el servidor.")
         }
         console.error("Error en la inicialización:", errorData)
-        setError(errorData.message || "Error desconocido")
-        setIsInitializing(false)
-        return
+        throw new Error(errorData.message || "Error desconocido")
       }
 
       const data = await response.json()
+      setIsConnected(true)
       console.log("Respuesta de inicialización:", data)
-      // No establecemos isInitializing a false aquí, esperamos el evento "ready" o "error" de Socket.IO
     } catch (error) {
       console.error("Error completo al inicializar WhatsApp:", error)
-      setError(error.message || "Error al inicializar WhatsApp")
-      setIsInitializing(false)
     }
   }
 
@@ -134,12 +81,11 @@ const WhatsAppBusiness = () => {
       .map((n) => n.trim())
       .filter((n) => n)
     if (!numbers.length || !message.trim()) {
-      setError("Debes ingresar números y un mensaje.")
+      console.error("Debes ingresar números y un mensaje.")
       return
     }
 
     try {
-      setError(null)
       console.log("Enviando mensajes...")
       const response = await fetch("/api/messages/send", {
         method: "POST",
@@ -148,16 +94,8 @@ const WhatsAppBusiness = () => {
       })
 
       if (!response.ok) {
-        let errorData
-        try {
-          errorData = await response.json()
-        } catch (jsonError) {
-          console.error("Error al parsear la respuesta del servidor:", jsonError)
-          setError("Error desconocido en el servidor")
-          return
-        }
+        const errorData = await response.json()
         console.error("Error al enviar mensajes:", errorData)
-        setError(errorData.message || "Error al enviar mensajes")
         return
       }
 
@@ -170,18 +108,13 @@ const WhatsAppBusiness = () => {
 
       console.log(`Mensajes enviados: ${sentCount}`)
       console.log(`Mensajes no enviados: ${failedCount}`)
-
-      if (failedCount > 0) {
-        const failedNumbers = result.results
-          .filter((r) => r.status === "error")
-          .map((r) => r.number.split("@")[0])
-          .join(", ")
-        setError(`No se pudieron enviar mensajes a: ${failedNumbers}`)
-      }
     } catch (error) {
       console.error("Error al enviar mensajes:", error)
-      setError(error.message || "Error al enviar mensajes")
     }
+  }
+
+  const handleRestart = async () => {
+    await handleInitialize()
   }
 
   const getFlagEmoji = (code) => {
@@ -213,24 +146,18 @@ const WhatsAppBusiness = () => {
       <h2 className={styles.title}>Plataforma WhatsApp Business</h2>
       <p className={styles.subtitle}>Envía mensajes y gestiona tus comunicaciones de WhatsApp</p>
 
-      {error && (
-        <div className={styles.errorBox}>
-          <p className={styles.errorMessage}>{error}</p>
-        </div>
-      )}
-
       {!isConnected && (
         <div className={styles.statusBox}>
           <div className={styles.statusContent}>
             <h3 className={styles.statusTitle}>WhatsApp no está inicializado</h3>
-            {qrCode && <img src={qrCode || "/placeholder.svg"} alt="QR Code" className={styles.qrCode} />}
+            {qrCode && <img src={qrCode} alt="QR Code" className={styles.qrCode} />}
           </div>
           <button
             className={styles.initButton}
             onClick={handleInitialize}
-            disabled={isConnected || isInitializing} // Deshabilitar si ya está conectado o inicializando
+            disabled={isConnected} // Deshabilitar si ya está conectado
           >
-            {isInitializing ? "Inicializando..." : "Inicializar WhatsApp"}
+            Inicializar WhatsApp
           </button>
         </div>
       )}
@@ -287,7 +214,6 @@ const WhatsAppBusiness = () => {
         <button
           className={`${styles.toggleButton} ${!showHistory ? styles.activeButton : ""}`}
           onClick={handleSendMessage}
-          disabled={!isConnected}
         >
           Enviar Mensaje
         </button>
@@ -304,5 +230,3 @@ const WhatsAppBusiness = () => {
 
 export default WhatsAppBusiness
 
-// Compare this snippet from pages/index.js:
-// import WhatsAppBusiness from "../components/WhatsAppBusiness"

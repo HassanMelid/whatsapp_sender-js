@@ -5,11 +5,11 @@
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  font-family: 'Segoe UI', Roboto, sans-serif;
+  font-family: "Segoe UI", Roboto, sans-serif;
 }
 
 .title {
-  color: #25D366;
+  color: #25d366;
   font-size: 1.5rem;
   margin-bottom: 0.5rem;
 }
@@ -35,7 +35,7 @@
 }
 
 .checkboxLabel input {
-  accent-color: #25D366;
+  accent-color: #25d366;
 }
 
 .statusBox {
@@ -71,6 +71,11 @@
   background-color: #065b26;
 }
 
+.initButton:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
 .inputGroup {
   margin-bottom: 1.5rem;
 }
@@ -101,7 +106,7 @@
 }
 
 .sendButton {
-  background-color: #25D366;
+  background-color: #25d366;
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -112,7 +117,7 @@
 }
 
 .sendButton:hover {
-  background-color: #128C7E;
+  background-color: #128c7e;
 }
 
 .sendButton:disabled {
@@ -142,10 +147,15 @@
   background-color: #e2e6ea;
 }
 
+.toggleButton:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
 .activeButton {
-  background-color: #25D366;
+  background-color: #25d366;
   color: white;
-  border-color: #25D366;
+  border-color: #25d366;
 }
 
 .flagInputContainer {
@@ -175,12 +185,26 @@
   background: #e6ffe6;
   padding: 1rem;
   border-radius: 8px;
-  border-left: 4px solid #25D366;
+  border-left: 4px solid #25d366;
   margin: 1.5rem 0;
 }
 
 .connectedMessage {
-  color: #25D366;
+  color: #25d366;
+  font-weight: bold;
+  text-align: center;
+}
+
+.errorBox {
+  background: #ffe6e6;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #dc3545;
+  margin: 1.5rem 0;
+}
+
+.errorMessage {
+  color: #dc3545;
   font-weight: bold;
   text-align: center;
 }
@@ -207,11 +231,24 @@
 }
 
 .header .link {
-  color: #25D366;
+  color: #25d366;
   text-decoration: none;
   font-weight: bold;
 }
 
 .header .link:hover {
   text-decoration: underline;
+}
+
+.messageStats {
+  font-size: 0.8rem;
+  color: #666;
+  margin-left: 0.5rem;
+}
+
+.messageStats .sent {
+  color: #28a745;
+}
+.messageStats .received {
+  color: #17a2b8;
 }

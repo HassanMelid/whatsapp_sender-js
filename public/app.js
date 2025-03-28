@@ -1,5 +1,7 @@
 // public/app.js
 document.addEventListener('DOMContentLoaded', () => {
+    const socket = io('http://localhost:3000'); // Aseguramos que el cliente se conecte al servidor de Socket.IO
+
     // Elementos del DOM
     const initBtn = document.getElementById('init-btn');
     const qrContainer = document.getElementById('qr-container');
@@ -10,8 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const messageTextarea = document.getElementById('message');
     const countryFlagContainer = document.getElementById('country-flag');
     const statusBox = document.getElementById('status-box');
-
-    const socket = io();
 
     // Mapa de códigos de país a emojis de banderas
     const countryFlags = {
@@ -43,12 +43,48 @@ document.addEventListener('DOMContentLoaded', () => {
     // Inicializar bandera al cargar la página
     updateCountryFlag();
 
+    // Restaurar estado al cargar la página
+    const savedState = JSON.parse(localStorage.getItem('whatsappState')) || {};
+    countryCodeInput.value = savedState.countryCode || '591';
+    numbersTextarea.value = savedState.phoneNumbers || '70123456';
+    messageTextarea.value = savedState.message || 'Escribe tu mensaje aquí...';
+    connectionStatus.textContent = savedState.isConnected ? 'Conectado' : 'Desconectado';
+    connectionStatus.style.color = savedState.isConnected ? '#25D366' : '#dc3545';
+
+    // Guardar estado al cambiar los campos
+    function saveState() {
+        const state = {
+            countryCode: countryCodeInput.value,
+            phoneNumbers: numbersTextarea.value,
+            message: messageTextarea.value,
+            isConnected: connectionStatus.textContent === 'Conectado'
+        };
+        localStorage.setItem('whatsappState', JSON.stringify(state));
+    }
+
+    countryCodeInput.addEventListener('input', saveState);
+    numbersTextarea.addEventListener('input', saveState);
+    messageTextarea.addEventListener('input', saveState);
+
+    // Verificar el estado del cliente al cargar la página
+    fetch('/api/whatsapp/status')
+        .then(async (response) => {
+            if (!response.ok) {
+                console.error('Error al verificar el estado del cliente de WhatsApp.');
+                return;
+            }
+            const data = await response.json();
+            console.log('Estado del cliente verificado:', data);
+        })
+        .catch((error) => {
+            console.error('Error al verificar el estado del cliente de WhatsApp:', error);
+        });
+
     // Resetear campos solo si contienen el texto o número predeterminado
     numbersTextarea.addEventListener('focus', () => {
         if (numbersTextarea.value === '70123456') {
             numbersTextarea.value = '';
             }
-        });
     });
 
     messageTextarea.addEventListener('focus', () => {
@@ -82,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const message = messageTextarea.value.trim();
     
         if (!numbers.length || !message) {
-            alert("Debes ingresar números y un mensaje.");
+            console.error("Debes ingresar números y un mensaje.");
             return;
         }
     
@@ -90,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sendMessageBtn.textContent = "Enviando...";
     
         try {
-            const response = await fetch('/api/messages/send', {
+            const response = await fetch('/api/messages/send', { // Aseguramos que el endpoint sea correcto
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ numbers: numbers.map(n => `${countryCode}${n}`), message })
@@ -99,23 +135,27 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error('Error al enviar mensajes:', errorData);
-                throw new Error(errorData.message || 'Error desconocido');
+                return;
             }
     
             const result = await response.json();
             console.log('Resultado del envío:', result);
-    
-            if (result.status === 'completed') {
-                alert("Mensajes enviados correctamente.");
-            } else {
-                alert("Ocurrieron errores al enviar algunos mensajes.");
-            }
         } catch (error) {
             console.error("Error al enviar mensajes:", error);
-            alert("Error al enviar mensajes.");
         } finally {
             sendMessageBtn.disabled = false;
             sendMessageBtn.textContent = "Enviar Mensaje";
         }
     });
+
+    // Detectar cuando la página se cierra o se actualiza
+    window.addEventListener('beforeunload', async () => {
+        try {
+            await fetch('/api/whatsapp/logout', { method: 'POST' });
+            console.log('Sesión de WhatsApp cerrada al salir de la página.');
+        } catch (error) {
+            console.error('Error al cerrar sesión de WhatsApp al salir de la página:', error);
+        }
+    });
+});
 

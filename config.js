@@ -19,7 +19,8 @@ module.exports = {
                 '--no-first-run',
                 '--no-zygote',
                 '--disable-gpu',
-                '--window-size=1280,800'
+                '--window-size=1280,800',
+                '--user-data-dir=./puppeteer_data' // Usar un directorio de datos para mantener la sesión
             ]
         }
     },

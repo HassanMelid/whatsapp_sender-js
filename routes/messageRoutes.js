@@ -1,7 +1,9 @@
-const express = require('express');
-const router = express.Router();
-const messageController = require('../controllers/messageController');
+const express = require("express")
+const router = express.Router()
+const messageController = require("../controllers/messageController")
 
-router.post('/api/messages/send', messageController.sendMessage);
+// Ruta para enviar mensajes
+router.post("/send", messageController.sendMessage)
 
-module.exports = router;
+module.exports = router
+
